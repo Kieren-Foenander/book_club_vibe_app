@@ -82,6 +82,19 @@ const applicationTables = {
     .index("by_book", ["bookId"])
     .index("by_user", ["userId"])
     .index("by_book_and_user", ["bookId", "userId"]),
+
+  pushSubscriptions: defineTable({
+    userId: v.id("users"),
+    subscription: v.object({
+      endpoint: v.string(),
+      keys: v.object({
+        p256dh: v.string(),
+        auth: v.string(),
+      }),
+    }),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"]),
 };
 
 export default defineSchema({

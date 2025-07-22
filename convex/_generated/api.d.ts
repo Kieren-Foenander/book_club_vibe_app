@@ -16,7 +16,9 @@ import type {
 import type * as auth from "../auth.js";
 import type * as books from "../books.js";
 import type * as clubs from "../clubs.js";
+import type * as crons from "../crons.js";
 import type * as http from "../http.js";
+import type * as push from "../push.js";
 import type * as router from "../router.js";
 
 /**
@@ -31,7 +33,9 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   books: typeof books;
   clubs: typeof clubs;
+  crons: typeof crons;
   http: typeof http;
+  push: typeof push;
   router: typeof router;
 }>;
 export declare const api: FilterApi<

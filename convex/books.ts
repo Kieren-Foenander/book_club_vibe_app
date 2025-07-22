@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalQuery, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const suggestBook = mutation({
@@ -458,5 +458,75 @@ export const getBookReviews = query({
     );
 
     return reviewsWithUser;
+  },
+});
+
+export const savePushSubscription = mutation({
+  args: {
+    subscription: v.object({
+      endpoint: v.string(),
+      keys: v.object({
+        p256dh: v.string(),
+        auth: v.string(),
+      }),
+    }),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Must be logged in");
+    // Upsert logic: update if exists, else insert
+    const existing = await ctx.db
+      .query("pushSubscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .unique();
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        subscription: args.subscription,
+        updatedAt: Date.now(),
+      });
+    } else {
+      await ctx.db.insert("pushSubscriptions", {
+        userId,
+        subscription: args.subscription,
+        updatedAt: Date.now(),
+      });
+    }
+    return null;
+  },
+});
+
+// Add internal queries for use in the action
+export const getAllPushSubscriptions = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("pushSubscriptions").collect();
+  },
+});
+
+export const getUserClubMemberships = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("clubMembers")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+  },
+});
+
+export const getPendingBooksForClub = internalQuery({
+  args: { clubId: v.id("clubs") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("books")
+      .withIndex("by_club_and_status", (q) => q.eq("clubId", args.clubId).eq("status", "pending"))
+      .collect();
+  },
+});
+
+export const updatePushSubTime = internalMutation({
+  args: { subId: v.id("pushSubscriptions") },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.subId, { updatedAt: Date.now() });
+    return null;
   },
 });
