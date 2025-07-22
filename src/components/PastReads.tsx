@@ -266,52 +266,58 @@ export function PastReads({ books, clubId }: PastReadsProps) {
                         ({new Date(review.ratedAt).toLocaleDateString()})
                       </span>
                     </div>
-                    <div className="flex gap-4 text-sm">
-                      <span>
-                        Storyline:{' '}
-                        {Array.from({ length: 5 }, (_, i) => (
-                          <span
-                            key={i}
-                            className={
-                              i < review.storylineRating
-                                ? 'text-yellow-500'
-                                : 'text-gray-300'
-                            }
-                          >
-                            ⭐
-                          </span>
-                        ))}
-                      </span>
-                      <span>
-                        Characters:{' '}
-                        {Array.from({ length: 5 }, (_, i) => (
-                          <span
-                            key={i}
-                            className={
-                              i < review.charactersRating
-                                ? 'text-red-500'
-                                : 'text-gray-300'
-                            }
-                          >
-                            ❤️
-                          </span>
-                        ))}
-                      </span>
-                      <span>
-                        Spice:{' '}
-                        {Array.from({ length: 5 }, (_, i) => (
-                          <span
-                            key={i}
-                            className={
-                              i < review.spiceRating
-                                ? 'text-red-500'
-                                : 'text-gray-300'
-                            }
-                          >
-                            🌶️
-                          </span>
-                        ))}
-                      </span>
+                    <div className="grid grid-cols-3 gap-4 text-xs">
+                      <div className="flex flex-col items-center gap-2">
+                        <div>Storyline: </div>
+                        <div>
+                          {Array.from({ length: 5 }, (_, i) => (
+                            <span
+                              key={i}
+                              className={
+                                i < review.storylineRating
+                                  ? 'text-yellow-500'
+                                  : 'text-gray-300'
+                              }
+                            >
+                              ⭐
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-center gap-2">
+                        <div>Characters: </div>
+                        <div>
+                          {Array.from({ length: 5 }, (_, i) => (
+                            <span
+                              key={i}
+                              className={
+                                i < review.charactersRating
+                                  ? 'text-red-500'
+                                  : 'text-gray-300'
+                              }
+                            >
+                              ❤️
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-center gap-2">
+                        <div>Spice: </div>
+                        <div>
+                          {Array.from({ length: 5 }, (_, i) => (
+                            <span
+                              key={i}
+                              className={
+                                i < review.spiceRating
+                                  ? 'text-red-500'
+                                  : 'text-gray-300'
+                              }
+                            >
+                              🌶️
+                            </span>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </li>
                 ))}
