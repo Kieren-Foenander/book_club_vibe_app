@@ -62,7 +62,7 @@ export function Bookshelf({ clubId }: BookshelfProps) {
       {activeTab === 'suggest' && <SuggestBook clubId={clubId} />}
 
       {/* Bottom Tab Bar */}
-      <nav className="fixed bottom-0 left-0 w-full z-20 bg-white border-t border-gray-200 shadow-lg flex justify-around items-center h-16 md:max-w-4xl md:left-1/2 md:-translate-x-1/2 md:rounded-t-xl md:mx-auto">
+      <nav className="fixed bottom-0 left-0 w-full z-20 bg-white border-t border-gray-200 shadow-lg flex justify-around items-center h-16 md:max-w-4xl md:left-1/2 md:-translate-x-1/2 md:rounded-t-xl md:mx-auto pb-4">
         <button
           onClick={() => setActiveTab('bookshelf')}
           className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
