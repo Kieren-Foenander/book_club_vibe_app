@@ -17,8 +17,12 @@ export function CurrentlyReading({
 }: CurrentlyReadingProps) {
   const [showProgressUpdate, setShowProgressUpdate] = useState(false)
   const [showRatingModal, setShowRatingModal] = useState(false)
-  const [currentPage, setCurrentPage] = useState(currentBook?.userProgress || 0)
-  const [totalPages, setTotalPages] = useState(currentBook?.totalPages || 0)
+  const [currentPage, setCurrentPage] = useState(
+    currentBook?.userProgress?.toString() || ''
+  )
+  const [totalPages, setTotalPages] = useState(
+    currentBook?.totalPages?.toString() || ''
+  )
   const [storylineRating, setStorylineRating] = useState(0)
   const [charactersRating, setCharactersRating] = useState(0)
   const [spiceRating, setSpiceRating] = useState(0)
@@ -31,11 +35,16 @@ export function CurrentlyReading({
     e.preventDefault()
     if (!currentBook) return
 
+    // Convert to numbers, treat empty as 0 or undefined
+    const currentPageNum = parseInt(currentPage, 10) || 0
+    const totalPagesNum =
+      totalPages === '' ? undefined : parseInt(totalPages, 10) || 0
+
     try {
       await updateProgress({
         bookId: currentBook.book._id,
-        currentPage,
-        totalPages: totalPages || undefined,
+        currentPage: currentPageNum,
+        totalPages: totalPagesNum,
       })
       toast.success('Progress updated! 📖')
       setShowProgressUpdate(false)
@@ -215,14 +224,14 @@ export function CurrentlyReading({
                 <div
                   className="bg-pink-600 h-3 rounded-full transition-all duration-300"
                   style={{
-                    width: `${totalPages > 0 ? (userProgress / totalPages) * 100 : 0}%`,
+                    width: `${totalPages > 0 ? (userProgress / (parseInt(totalPages, 10) || 1)) * 100 : 0}%`,
                   }}
                 ></div>
               </div>
               <p className="text-sm text-gray-600">
-                Page {userProgress} {totalPages > 0 && `of ${totalPages}`}
-                {totalPages > 0 &&
-                  ` (${Math.round((userProgress / totalPages) * 100)}%)`}
+                Page {userProgress} {totalPages && `of ${totalPages}`}
+                {totalPages &&
+                  ` (${Math.round((userProgress / (parseInt(totalPages, 10) || 1)) * 100)}%)`}
               </p>
             </div>
 
@@ -265,7 +274,7 @@ export function CurrentlyReading({
               Update Progress
             </h3>
 
-            <form onSubmit={void handleUpdateProgress}>
+            <form onSubmit={handleUpdateProgress}>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Current Page
@@ -273,9 +282,7 @@ export function CurrentlyReading({
                 <input
                   type="number"
                   value={currentPage}
-                  onChange={(e) =>
-                    setCurrentPage(parseInt(e.target.value) || 0)
-                  }
+                  onChange={(e) => setCurrentPage(e.target.value)}
                   className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none"
                   min="0"
                   required
@@ -289,7 +296,7 @@ export function CurrentlyReading({
                 <input
                   type="number"
                   value={totalPages}
-                  onChange={(e) => setTotalPages(parseInt(e.target.value) || 0)}
+                  onChange={(e) => setTotalPages(e.target.value)}
                   className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-pink-500 focus:ring-1 focus:ring-pink-500 outline-none"
                   min="0"
                 />
