@@ -3,6 +3,7 @@ import {
   Unauthenticated,
   useQuery,
   useMutation,
+  useQuery as useConvexQuery,
 } from 'convex/react'
 import { api } from '../convex/_generated/api'
 import { SignInForm } from './SignInForm'
@@ -21,6 +22,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 export default function App() {
   const [currentView, setCurrentView] = useState<'clubs' | 'bookshelf'>('clubs')
   const [selectedClubId, setSelectedClubId] = useState<Id<'clubs'> | null>(null)
+  const [showManageClubs, setShowManageClubs] = useState(false)
 
   // Add QueryClient initialization
   const [queryClient] = useState(() => new QueryClient())
@@ -28,15 +30,29 @@ export default function App() {
   const handleClubSelect = (clubId: Id<'clubs'>) => {
     setSelectedClubId(clubId)
     setCurrentView('bookshelf')
+    setShowManageClubs(false)
   }
 
   const handleBackToClubs = () => {
     setCurrentView('clubs')
     setSelectedClubId(null)
+    setShowManageClubs(false)
   }
 
   const savePushSubscription = useMutation(api.books.savePushSubscription)
   const user = useQuery(api.auth.loggedInUser)
+  const userClubs = useConvexQuery(api.clubs.getUserClubs)
+
+  // Auto-open bookshelf if only one club
+  useEffect(() => {
+    if (userClubs != null && userClubs.length === 1 && user) {
+      const onlyClub = userClubs[0]
+      if (onlyClub) {
+        setSelectedClubId(onlyClub._id)
+        setCurrentView('bookshelf')
+      }
+    }
+  }, [userClubs, user])
 
   useEffect(() => {
     if (!user) return
@@ -57,22 +73,45 @@ export default function App() {
       .catch(() => {})
   }, [user, savePushSubscription])
 
+  // Determine if back button should be shown
+  const showBackButton =
+    currentView === 'bookshelf' && userClubs && userClubs.length > 1
+
+  // Show manage clubs button always (but subtle)
+  const handleManageClubs = () => {
+    setCurrentView('clubs')
+    setSelectedClubId(null)
+    setShowManageClubs(false)
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-pink-50 to-purple-50">
         <header className="sticky top-0 z-10 bg-white/90 backdrop-blur-sm h-16 flex justify-between items-center border-b shadow-sm px-4">
           <div className="flex items-center gap-3">
-            {currentView === 'bookshelf' && (
+            {showBackButton && (
               <button
                 onClick={handleBackToClubs}
-                className="text-pink-600 hover:text-pink-700 font-medium"
+                className="text-pink-400 hover:text-pink-600 text-sm font-normal opacity-60 px-1"
+                style={{ fontSize: '1rem' }}
+                aria-label="Back to clubs"
               >
                 ← Back
               </button>
             )}
             <h2 className="text-xl font-bold text-pink-600">📚 Book Club</h2>
           </div>
-          <SignOutButton />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleManageClubs}
+              className="text-gray-400 hover:text-pink-500 text-xs px-2 py-1 rounded transition-colors border border-transparent hover:border-pink-200"
+              style={{ fontSize: '0.85rem' }}
+              aria-label="Manage clubs"
+            >
+              Manage Clubs
+            </button>
+            <SignOutButton />
+          </div>
         </header>
 
         <main className="flex-1 p-4">
@@ -101,7 +140,7 @@ export default function App() {
           </Unauthenticated>
         </main>
 
-        <Toaster />
+        <Toaster position="top-center" />
       </div>
     </QueryClientProvider>
   )
