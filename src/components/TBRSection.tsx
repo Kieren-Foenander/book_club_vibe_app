@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import { useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import { Id } from '../../convex/_generated/dataModel'
@@ -48,7 +49,7 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
           <h2 className="text-2xl font-bold text-gray-800">📚 To Be Read</h2>
           {isAdmin && books.length > 0 && (
             <button
-              onClick={void handleSelectNext}
+              onClick={handleSelectNext}
               disabled={isRevealing}
               className="bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50"
             >

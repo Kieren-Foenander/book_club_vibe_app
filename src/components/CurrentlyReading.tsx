@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import { useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import { Id } from '../../convex/_generated/dataModel'
@@ -422,7 +423,7 @@ export function CurrentlyReading({
                 Cancel
               </button>
               <button
-                onClick={void handleSubmitRating}
+                onClick={handleSubmitRating}
                 disabled={
                   isSubmitting ||
                   storylineRating === 0 ||

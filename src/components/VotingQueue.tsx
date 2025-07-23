@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import { Id } from '../../convex/_generated/dataModel'
@@ -215,21 +216,21 @@ export function VotingQueue({ clubId }: VotingQueueProps) {
 
             <div className="space-y-3">
               <button
-                onClick={() => void handleVote('veto', 'already_read')}
+                onClick={() => handleVote('veto', 'already_read')}
                 className="w-full p-3 text-left rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
               >
                 📖 I've already read it
               </button>
 
               <button
-                onClick={() => void handleVote('veto', 'not_for_me')}
+                onClick={() => handleVote('veto', 'not_for_me')}
                 className="w-full p-3 text-left rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
               >
                 🌶️ Not for me (Spice/Theme)
               </button>
 
               <button
-                onClick={() => void handleVote('veto', 'not_interested')}
+                onClick={() => handleVote('veto', 'not_interested')}
                 className="w-full p-3 text-left rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
               >
                 😐 Not interested

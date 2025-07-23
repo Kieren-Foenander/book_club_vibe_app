@@ -16,10 +16,14 @@ import { Bookshelf } from './components/Bookshelf'
 import { NameChecker } from './components/NameChecker'
 import { Id } from '../convex/_generated/dataModel'
 import { subscribeUserToPush } from './lib/utils'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 export default function App() {
   const [currentView, setCurrentView] = useState<'clubs' | 'bookshelf'>('clubs')
   const [selectedClubId, setSelectedClubId] = useState<Id<'clubs'> | null>(null)
+
+  // Add QueryClient initialization
+  const [queryClient] = useState(() => new QueryClient())
 
   const handleClubSelect = (clubId: Id<'clubs'>) => {
     setSelectedClubId(clubId)
@@ -54,50 +58,52 @@ export default function App() {
   }, [user, savePushSubscription])
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-pink-50 to-purple-50">
-      <header className="sticky top-0 z-10 bg-white/90 backdrop-blur-sm h-16 flex justify-between items-center border-b shadow-sm px-4">
-        <div className="flex items-center gap-3">
-          {currentView === 'bookshelf' && (
-            <button
-              onClick={handleBackToClubs}
-              className="text-pink-600 hover:text-pink-700 font-medium"
-            >
-              ← Back
-            </button>
-          )}
-          <h2 className="text-xl font-bold text-pink-600">📚 Book Club</h2>
-        </div>
-        <SignOutButton />
-      </header>
-
-      <main className="flex-1 p-4">
-        <Authenticated>
-          <NameChecker>
-            {currentView === 'clubs' ? (
-              <ClubsView onClubSelect={handleClubSelect} />
-            ) : selectedClubId ? (
-              <Bookshelf clubId={selectedClubId} />
-            ) : null}
-          </NameChecker>
-        </Authenticated>
-
-        <Unauthenticated>
-          <div className="max-w-md mx-auto mt-20">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-pink-600 mb-4">
-                📚✨ Book Club
-              </h1>
-              <p className="text-lg text-gray-600">
-                Your private space for spicy book discussions
-              </p>
-            </div>
-            <SignInForm />
+    <QueryClientProvider client={queryClient}>
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-pink-50 to-purple-50">
+        <header className="sticky top-0 z-10 bg-white/90 backdrop-blur-sm h-16 flex justify-between items-center border-b shadow-sm px-4">
+          <div className="flex items-center gap-3">
+            {currentView === 'bookshelf' && (
+              <button
+                onClick={handleBackToClubs}
+                className="text-pink-600 hover:text-pink-700 font-medium"
+              >
+                ← Back
+              </button>
+            )}
+            <h2 className="text-xl font-bold text-pink-600">📚 Book Club</h2>
           </div>
-        </Unauthenticated>
-      </main>
+          <SignOutButton />
+        </header>
 
-      <Toaster />
-    </div>
+        <main className="flex-1 p-4">
+          <Authenticated>
+            <NameChecker>
+              {currentView === 'clubs' ? (
+                <ClubsView onClubSelect={handleClubSelect} />
+              ) : selectedClubId ? (
+                <Bookshelf clubId={selectedClubId} />
+              ) : null}
+            </NameChecker>
+          </Authenticated>
+
+          <Unauthenticated>
+            <div className="max-w-md mx-auto mt-20">
+              <div className="text-center mb-8">
+                <h1 className="text-4xl font-bold text-pink-600 mb-4">
+                  📚✨ Book Club
+                </h1>
+                <p className="text-lg text-gray-600">
+                  Your private space for spicy book discussions
+                </p>
+              </div>
+              <SignInForm />
+            </div>
+          </Unauthenticated>
+        </main>
+
+        <Toaster />
+      </div>
+    </QueryClientProvider>
   )
 }
 
