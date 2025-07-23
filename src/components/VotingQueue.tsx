@@ -11,7 +11,6 @@ interface VotingQueueProps {
 
 export function VotingQueue({ clubId }: VotingQueueProps) {
   const pendingBooks = useQuery(api.books.getPendingBooks, { clubId })
-  const [currentBookIndex, setCurrentBookIndex] = useState(0)
   const [showVetoReasons, setShowVetoReasons] = useState(false)
   const voteOnBook = useMutation(api.books.voteOnBook)
 
@@ -27,57 +26,23 @@ export function VotingQueue({ clubId }: VotingQueueProps) {
 
   if (unvotedBooks.length === 0) {
     return (
-      <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-200">
-        <div className="text-center">
-          <div className="text-6xl mb-4">✅</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            All caught up!
-          </h2>
-          <p className="text-gray-600">You've voted on all pending books.</p>
-        </div>
-
-        {pendingBooks.length > 0 && (
-          <div className="mt-8">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Voting Status
-            </h3>
-            <div className="space-y-3">
-              {pendingBooks.map((book) => (
-                <div
-                  key={book._id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                >
-                  <div>
-                    <h4 className="font-medium text-gray-800">{book.title}</h4>
-                    <p className="text-sm text-gray-600">by {book.author}</p>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-green-600">
-                        👍 {book.approvalCount}
-                      </span>
-                      <span className="text-red-600">👎 {book.vetoCount}</span>
-                    </div>
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full ${
-                        book.userVote === 'approve'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-red-100 text-red-700'
-                      }`}
-                    >
-                      You {book.userVote === 'approve' ? 'approved' : 'vetoed'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+      <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-200 text-center">
+        <div className="text-6xl mb-4">📚</div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">
+          No books left to review!
+        </h2>
+        <p className="text-gray-600">
+          You've voted on all pending books. Check back later for new
+          suggestions!
+        </p>
       </div>
     )
   }
 
-  const currentBook = unvotedBooks[currentBookIndex]
+  const currentBook = unvotedBooks[0]
+  if (!currentBook) {
+    return null
+  }
 
   const handleVote = async (vote: 'approve' | 'veto', vetoReason?: string) => {
     try {
@@ -88,13 +53,6 @@ export function VotingQueue({ clubId }: VotingQueueProps) {
       })
 
       toast.success(vote === 'approve' ? 'Book approved! 👍' : 'Book vetoed 👎')
-
-      // Move to next book or reset if this was the last one
-      if (currentBookIndex < unvotedBooks.length - 1) {
-        setCurrentBookIndex(currentBookIndex + 1)
-      } else {
-        setCurrentBookIndex(0)
-      }
 
       setShowVetoReasons(false)
     } catch (error) {
@@ -158,7 +116,9 @@ export function VotingQueue({ clubId }: VotingQueueProps) {
                 <span
                   key={i}
                   className={
-                    i < currentBook.spiceRating ? 'text-red-500' : 'grayscale'
+                    i < (currentBook.spiceRating ?? 0)
+                      ? 'text-red-500'
+                      : 'grayscale'
                   }
                 >
                   🌶️
@@ -190,21 +150,6 @@ export function VotingQueue({ clubId }: VotingQueueProps) {
           </button>
         </div>
       </div>
-
-      {/* Navigation */}
-      {unvotedBooks.length > 1 && (
-        <div className="flex justify-center mt-4 gap-2">
-          {unvotedBooks.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentBookIndex(index)}
-              className={`w-3 h-3 rounded-full transition-colors ${
-                index === currentBookIndex ? 'bg-purple-600' : 'bg-gray-300'
-              }`}
-            />
-          ))}
-        </div>
-      )}
 
       {/* Veto Reasons Modal */}
       {showVetoReasons && (
