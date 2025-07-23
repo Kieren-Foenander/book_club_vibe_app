@@ -10,7 +10,7 @@ interface PastReadsProps {
   clubId: Id<'clubs'>
 }
 
-export function PastReads({ books, clubId }: PastReadsProps) {
+export function PastReads({ books }: PastReadsProps) {
   const [showRatingModal, setShowRatingModal] = useState(false)
   const [selectedBook, setSelectedBook] = useState<any>(null)
   const [storylineRating, setStorylineRating] = useState(0)
@@ -154,6 +154,11 @@ export function PastReads({ books, clubId }: PastReadsProps) {
                   {book.title}
                 </h3>
                 <p className="text-gray-600 text-sm mb-3">by {book.author}</p>
+                {book.genre && (
+                  <span className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-1 rounded mb-2 mr-2">
+                    {book.genre}
+                  </span>
+                )}
 
                 {book.ratingCount > 0 ? (
                   <div className="space-y-1">
@@ -166,7 +171,7 @@ export function PastReads({ books, clubId }: PastReadsProps) {
                             className={
                               i < Math.round(book.avgRatings.storyline)
                                 ? 'text-yellow-500'
-                                : 'text-gray-300'
+                                : 'grayscale'
                             }
                           >
                             ⭐
@@ -184,7 +189,7 @@ export function PastReads({ books, clubId }: PastReadsProps) {
                             className={
                               i < Math.round(book.avgRatings.characters)
                                 ? 'text-red-500'
-                                : 'text-gray-300'
+                                : 'grayscale'
                             }
                           >
                             ❤️
@@ -202,7 +207,7 @@ export function PastReads({ books, clubId }: PastReadsProps) {
                             className={
                               i < Math.round(book.avgRatings.spice)
                                 ? 'text-red-500'
-                                : 'text-gray-300'
+                                : 'grayscale'
                             }
                           >
                             🌶️
@@ -276,7 +281,7 @@ export function PastReads({ books, clubId }: PastReadsProps) {
                               className={
                                 i < review.storylineRating
                                   ? 'text-yellow-500'
-                                  : 'text-gray-300'
+                                  : 'grayscale'
                               }
                             >
                               ⭐
@@ -293,7 +298,7 @@ export function PastReads({ books, clubId }: PastReadsProps) {
                               className={
                                 i < review.charactersRating
                                   ? 'text-red-500'
-                                  : 'text-gray-300'
+                                  : 'grayscale'
                               }
                             >
                               ❤️
@@ -310,7 +315,7 @@ export function PastReads({ books, clubId }: PastReadsProps) {
                               className={
                                 i < review.spiceRating
                                   ? 'text-red-500'
-                                  : 'text-gray-300'
+                                  : 'grayscale'
                               }
                             >
                               🌶️
@@ -358,7 +363,7 @@ export function PastReads({ books, clubId }: PastReadsProps) {
                       className={`text-3xl transition-all duration-200 hover:scale-110 ${
                         i < storylineRating
                           ? 'text-yellow-500 drop-shadow-sm'
-                          : 'text-gray-300 hover:text-yellow-400'
+                          : 'grayscale hover:text-yellow-400'
                       }`}
                     >
                       ⭐
@@ -388,7 +393,7 @@ export function PastReads({ books, clubId }: PastReadsProps) {
                       className={`text-3xl transition-all duration-200 hover:scale-110 ${
                         i < charactersRating
                           ? 'text-red-500 drop-shadow-sm'
-                          : 'text-gray-300 hover:text-red-400'
+                          : 'grayscale hover:text-red-400'
                       }`}
                     >
                       ❤️
@@ -418,7 +423,7 @@ export function PastReads({ books, clubId }: PastReadsProps) {
                       className={`text-3xl transition-all duration-200 hover:scale-110 ${
                         i < spiceRating
                           ? 'text-red-500 drop-shadow-sm'
-                          : 'text-gray-300 hover:text-red-400'
+                          : 'grayscale hover:text-red-400'
                       }`}
                     >
                       🌶️
@@ -443,7 +448,7 @@ export function PastReads({ books, clubId }: PastReadsProps) {
                 Cancel
               </button>
               <button
-                onClick={handleSubmitRating}
+                onClick={void handleSubmitRating}
                 disabled={
                   isSubmitting ||
                   storylineRating === 0 ||

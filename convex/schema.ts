@@ -26,6 +26,7 @@ const applicationTables = {
     summary: v.optional(v.string()),
     coverUrl: v.optional(v.string()),
     spiceRating: v.number(), // 1-5 chilis
+    genre: v.optional(v.string()),
     suggestedBy: v.id("users"),
     status: v.union(
       v.literal("pending"), // waiting for votes

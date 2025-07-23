@@ -10,6 +10,7 @@ export const suggestBook = mutation({
     summary: v.optional(v.string()),
     coverUrl: v.optional(v.string()),
     spiceRating: v.number(),
+    genre: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -34,6 +35,7 @@ export const suggestBook = mutation({
       summary: args.summary,
       coverUrl: args.coverUrl,
       spiceRating: args.spiceRating,
+      genre: args.genre,
       suggestedBy: userId,
       status: "pending",
       suggestedAt: Date.now(),

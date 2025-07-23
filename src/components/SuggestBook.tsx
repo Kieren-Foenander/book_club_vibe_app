@@ -1,28 +1,29 @@
-import { useState } from "react";
-import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { Id } from "../../convex/_generated/dataModel";
-import { toast } from "sonner";
+import { useState } from 'react'
+import { useMutation } from 'convex/react'
+import { api } from '../../convex/_generated/api'
+import { Id } from '../../convex/_generated/dataModel'
+import { toast } from 'sonner'
 
 interface SuggestBookProps {
-  clubId: Id<"clubs">;
+  clubId: Id<'clubs'>
 }
 
 export function SuggestBook({ clubId }: SuggestBookProps) {
-  const [title, setTitle] = useState("");
-  const [author, setAuthor] = useState("");
-  const [summary, setSummary] = useState("");
-  const [coverUrl, setCoverUrl] = useState("");
-  const [spiceRating, setSpiceRating] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const suggestBook = useMutation(api.books.suggestBook);
+  const [title, setTitle] = useState('')
+  const [author, setAuthor] = useState('')
+  const [summary, setSummary] = useState('')
+  const [coverUrl, setCoverUrl] = useState('')
+  const [spiceRating, setSpiceRating] = useState(1)
+  const [genre, setGenre] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+
+  const suggestBook = useMutation(api.books.suggestBook)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim() || !author.trim()) return;
+    e.preventDefault()
+    if (!title.trim() || !author.trim()) return
 
-    setIsLoading(true);
+    setIsLoading(true)
     try {
       await suggestBook({
         clubId,
@@ -31,32 +32,39 @@ export function SuggestBook({ clubId }: SuggestBookProps) {
         summary: summary.trim() || undefined,
         coverUrl: coverUrl.trim() || undefined,
         spiceRating,
-      });
-      
-      toast.success("Book suggested! 🎉 It's now in the voting queue.");
-      
+        genre: genre.trim() || undefined,
+      })
+
+      toast.success("Book suggested! 🎉 It's now in the voting queue.")
+
       // Reset form
-      setTitle("");
-      setAuthor("");
-      setSummary("");
-      setCoverUrl("");
-      setSpiceRating(1);
+      setTitle('')
+      setAuthor('')
+      setSummary('')
+      setCoverUrl('')
+      setSpiceRating(1)
+      setGenre('')
     } catch (error) {
-      toast.error("Failed to suggest book");
-      console.error(error);
+      toast.error('Failed to suggest book')
+      console.error(error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">📚 Suggest a Book</h2>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">
+          📚 Suggest a Book
+        </h2>
+
+        <form onSubmit={void handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="title"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Book Title *
             </label>
             <input
@@ -71,7 +79,10 @@ export function SuggestBook({ clubId }: SuggestBookProps) {
           </div>
 
           <div>
-            <label htmlFor="author" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="author"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Author *
             </label>
             <input
@@ -86,7 +97,10 @@ export function SuggestBook({ clubId }: SuggestBookProps) {
           </div>
 
           <div>
-            <label htmlFor="coverUrl" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="coverUrl"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Cover Image URL (optional)
             </label>
             <input
@@ -100,7 +114,27 @@ export function SuggestBook({ clubId }: SuggestBookProps) {
           </div>
 
           <div>
-            <label htmlFor="summary" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="genre"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Genre (optional)
+            </label>
+            <input
+              id="genre"
+              type="text"
+              value={genre}
+              onChange={(e) => setGenre(e.target.value)}
+              placeholder="e.g. Fantasy, Romance, Thriller"
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-shadow"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="summary"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Summary (optional)
             </label>
             <textarea
@@ -124,7 +158,7 @@ export function SuggestBook({ clubId }: SuggestBookProps) {
                   type="button"
                   onClick={() => setSpiceRating(i + 1)}
                   className={`text-3xl transition-transform hover:scale-110 ${
-                    i < spiceRating ? "text-red-500" : "text-gray-300"
+                    i < spiceRating ? 'text-red-500' : 'grayscale'
                   }`}
                 >
                   🌶️
@@ -132,11 +166,11 @@ export function SuggestBook({ clubId }: SuggestBookProps) {
               ))}
             </div>
             <div className="mt-2 text-sm text-gray-600">
-              {spiceRating === 1 && "Mild - Sweet romance"}
-              {spiceRating === 2 && "Warm - Some steamy scenes"}
-              {spiceRating === 3 && "Hot - Regular spicy content"}
-              {spiceRating === 4 && "Very Hot - Frequent spicy scenes"}
-              {spiceRating === 5 && "Fire - Maximum spice level"}
+              {spiceRating === 1 && 'Mild - Sweet romance'}
+              {spiceRating === 2 && 'Warm - Some steamy scenes'}
+              {spiceRating === 3 && 'Hot - Regular spicy content'}
+              {spiceRating === 4 && 'Very Hot - Frequent spicy scenes'}
+              {spiceRating === 5 && 'Fire - Maximum spice level'}
             </div>
           </div>
 
@@ -145,7 +179,7 @@ export function SuggestBook({ clubId }: SuggestBookProps) {
             disabled={isLoading || !title.trim() || !author.trim()}
             className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? "Suggesting..." : "🚀 Suggest Book"}
+            {isLoading ? 'Suggesting...' : '🚀 Suggest Book'}
           </button>
         </form>
 
@@ -154,10 +188,12 @@ export function SuggestBook({ clubId }: SuggestBookProps) {
           <ul className="text-sm text-blue-700 space-y-1">
             <li>• Be honest with your spice rating - it helps everyone!</li>
             <li>• A good summary helps others decide if they're interested</li>
-            <li>• Books need 100% approval from all members to make it to TBR</li>
+            <li>
+              • Books need 100% approval from all members to make it to TBR
+            </li>
           </ul>
         </div>
       </div>
     </div>
-  );
+  )
 }

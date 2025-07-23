@@ -1,45 +1,45 @@
-import { useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import { Id } from "../../convex/_generated/dataModel";
-import { useState } from "react";
-import { toast } from "sonner";
+import { useMutation } from 'convex/react'
+import { api } from '../../convex/_generated/api'
+import { Id } from '../../convex/_generated/dataModel'
+import { useState } from 'react'
+import { toast } from 'sonner'
 
 interface TBRSectionProps {
-  books: any[];
-  clubId: Id<"clubs">;
-  isAdmin: boolean;
+  books: any[]
+  clubId: Id<'clubs'>
+  isAdmin: boolean
 }
 
 export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
-  const [showReveal, setShowReveal] = useState(false);
-  const [selectedBook, setSelectedBook] = useState<any>(null);
-  const [isRevealing, setIsRevealing] = useState(false);
-  const selectNextBook = useMutation(api.books.selectNextBook);
+  const [showReveal, setShowReveal] = useState(false)
+  const [selectedBook, setSelectedBook] = useState<any>(null)
+  const [isRevealing, setIsRevealing] = useState(false)
+  const selectNextBook = useMutation(api.books.selectNextBook)
 
   const handleSelectNext = async () => {
-    if (!isAdmin) return;
+    if (!isAdmin) return
 
-    setIsRevealing(true);
+    setIsRevealing(true)
     try {
-      const book = await selectNextBook({ clubId });
-      setSelectedBook(book);
-      
+      const book = await selectNextBook({ clubId })
+      setSelectedBook(book)
+
       // Dramatic reveal animation
       setTimeout(() => {
-        setShowReveal(true);
-        setIsRevealing(false);
-      }, 2000);
+        setShowReveal(true)
+        setIsRevealing(false)
+      }, 2000)
     } catch (error) {
-      toast.error("Failed to select next book");
-      console.error(error);
-      setIsRevealing(false);
+      toast.error('Failed to select next book')
+      console.error(error)
+      setIsRevealing(false)
     }
-  };
+  }
 
   const closeReveal = () => {
-    setShowReveal(false);
-    setSelectedBook(null);
-  };
+    setShowReveal(false)
+    setSelectedBook(null)
+  }
 
   return (
     <>
@@ -48,11 +48,11 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
           <h2 className="text-2xl font-bold text-gray-800">📚 To Be Read</h2>
           {isAdmin && books.length > 0 && (
             <button
-              onClick={handleSelectNext}
+              onClick={void handleSelectNext}
               disabled={isRevealing}
               className="bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50"
             >
-              {isRevealing ? "Selecting..." : "🎭 Dramatic Reveal"}
+              {isRevealing ? 'Selecting...' : '🎭 Dramatic Reveal'}
             </button>
           )}
         </div>
@@ -68,7 +68,10 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {books.map((book) => (
-              <div key={book._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div
+                key={book._id}
+                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+              >
                 {book.coverUrl ? (
                   <img
                     src={book.coverUrl}
@@ -80,15 +83,27 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
                     <span className="text-3xl">📚</span>
                   </div>
                 )}
-                
-                <h3 className="font-semibold text-gray-800 mb-1">{book.title}</h3>
+
+                <h3 className="font-semibold text-gray-800 mb-1">
+                  {book.title}
+                </h3>
                 <p className="text-gray-600 text-sm mb-2">by {book.author}</p>
-                
+                {book.genre && (
+                  <span className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-1 rounded mb-2 mr-2">
+                    {book.genre}
+                  </span>
+                )}
+
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-500">Spice:</span>
                   <div className="flex">
                     {Array.from({ length: 5 }, (_, i) => (
-                      <span key={i} className={i < book.spiceRating ? "text-red-500" : "text-gray-300"}>
+                      <span
+                        key={i}
+                        className={
+                          i < book.spiceRating ? 'text-red-500' : 'grayscale'
+                        }
+                      >
                         🌶️
                       </span>
                     ))}
@@ -117,7 +132,7 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">
                   Your Next Book Is...
                 </h2>
-                
+
                 {selectedBook && (
                   <div className="text-center">
                     {selectedBook.coverUrl ? (
@@ -131,17 +146,33 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
                         <span className="text-4xl">📚</span>
                       </div>
                     )}
-                    
+
                     <h3 className="text-xl font-bold text-gray-800 mb-2">
                       {selectedBook.title}
                     </h3>
-                    <p className="text-gray-600 mb-4">by {selectedBook.author}</p>
-                    
+                    <p className="text-gray-600 mb-4">
+                      by {selectedBook.author}
+                    </p>
+                    {selectedBook.genre && (
+                      <span className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-1 rounded mb-4 mr-2">
+                        {selectedBook.genre}
+                      </span>
+                    )}
+
                     <div className="flex justify-center items-center gap-2 mb-6">
-                      <span className="text-sm text-gray-500">Spice Level:</span>
+                      <span className="text-sm text-gray-500">
+                        Spice Level:
+                      </span>
                       <div className="flex">
                         {Array.from({ length: 5 }, (_, i) => (
-                          <span key={i} className={i < selectedBook.spiceRating ? "text-red-500" : "text-gray-300"}>
+                          <span
+                            key={i}
+                            className={
+                              i < selectedBook.spiceRating
+                                ? 'text-red-500'
+                                : 'grayscale'
+                            }
+                          >
                             🌶️
                           </span>
                         ))}
@@ -149,7 +180,7 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
                     </div>
                   </div>
                 )}
-                
+
                 <button
                   onClick={closeReveal}
                   className="bg-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-pink-700 transition-colors"
@@ -162,5 +193,5 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
         </div>
       )}
     </>
-  );
+  )
 }
