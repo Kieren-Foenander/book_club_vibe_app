@@ -4,6 +4,7 @@ import { api } from '../../convex/_generated/api'
 import { Id } from '../../convex/_generated/dataModel'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { EditBookDrawer } from './EditBookDrawer'
 
 interface CurrentlyReadingProps {
   currentBook: any
@@ -17,6 +18,7 @@ export function CurrentlyReading({
 }: CurrentlyReadingProps) {
   const [showProgressUpdate, setShowProgressUpdate] = useState(false)
   const [showRatingModal, setShowRatingModal] = useState(false)
+  const [showEditDrawer, setShowEditDrawer] = useState(false)
   const [currentPage, setCurrentPage] = useState(
     currentBook?.userProgress?.toString() || ''
   )
@@ -155,12 +157,20 @@ export function CurrentlyReading({
           <h2 className="text-2xl font-bold text-gray-800">
             📖 Currently Reading
           </h2>
-          <button
-            onClick={openRatingModal}
-            className="bg-pink-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-pink-700 transition-colors text-sm"
-          >
-            ⭐ Rate Book
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowEditDrawer(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm"
+            >
+              ✏️ Edit
+            </button>
+            <button
+              onClick={openRatingModal}
+              className="bg-pink-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-pink-700 transition-colors text-sm"
+            >
+              ⭐ Rate Book
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col md:flex-row gap-6">
@@ -444,6 +454,15 @@ export function CurrentlyReading({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Edit Book Drawer */}
+      {showEditDrawer && currentBook && (
+        <EditBookDrawer
+          book={currentBook.book}
+          isOpen={showEditDrawer}
+          onClose={() => setShowEditDrawer(false)}
+        />
       )}
     </>
   )

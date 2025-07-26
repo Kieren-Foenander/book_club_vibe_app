@@ -463,6 +463,52 @@ export const getBookReviews = query({
   },
 });
 
+export const updateBook = mutation({
+  args: {
+    bookId: v.id("books"),
+    title: v.string(),
+    author: v.string(),
+    summary: v.optional(v.string()),
+    coverUrl: v.optional(v.string()),
+    spiceRating: v.number(),
+    genre: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Must be logged in");
+    }
+
+    // Get the book to verify it exists
+    const book = await ctx.db.get(args.bookId);
+    if (!book) {
+      throw new Error("Book not found");
+    }
+
+    // Verify user is a member of the club
+    const membership = await ctx.db
+      .query("clubMembers")
+      .withIndex("by_club_and_user", (q) => q.eq("clubId", book.clubId).eq("userId", userId))
+      .unique();
+
+    if (!membership) {
+      throw new Error("You are not a member of this club");
+    }
+
+    // Update the book
+    await ctx.db.patch(args.bookId, {
+      title: args.title,
+      author: args.author,
+      summary: args.summary,
+      coverUrl: args.coverUrl,
+      spiceRating: args.spiceRating,
+      genre: args.genre,
+    });
+
+    return args.bookId;
+  },
+});
+
 export const savePushSubscription = mutation({
   args: {
     subscription: v.object({

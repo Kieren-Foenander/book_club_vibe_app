@@ -37,6 +37,8 @@ export function SuggestBook({ clubId }: SuggestBookProps) {
   const [spiceRating, setSpiceRating] = useState(1)
   const [genre, setGenre] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [imageError, setImageError] = useState(false)
+  const [imageLoading, setImageLoading] = useState(false)
 
   // Dropdown and search state
   const [showDropdown, setShowDropdown] = useState(false)
@@ -102,6 +104,29 @@ export function SuggestBook({ clubId }: SuggestBookProps) {
       staleTime: 1000 * 60 * 10,
       gcTime: 1000 * 60 * 20,
     })
+
+  // Handle image loading states
+  useEffect(() => {
+    if (!coverUrl) {
+      setImageError(false)
+      setImageLoading(false)
+      return
+    }
+
+    setImageLoading(true)
+    setImageError(false)
+
+    const img = new Image()
+    img.onload = () => {
+      setImageLoading(false)
+      setImageError(false)
+    }
+    img.onerror = () => {
+      setImageLoading(false)
+      setImageError(true)
+    }
+    img.src = coverUrl
+  }, [coverUrl])
 
   // Autofill fields when workDetails changes
   useEffect(() => {
@@ -345,6 +370,39 @@ export function SuggestBook({ clubId }: SuggestBookProps) {
               placeholder="https://example.com/book-cover.jpg"
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-green-500 focus:ring-1 focus:ring-green-500 outline-none transition-shadow"
             />
+            
+            {/* Image Preview */}
+            {coverUrl && (
+              <div className="mt-3">
+                <div className="relative w-32 h-48 mx-auto">
+                  {imageLoading && (
+                    <div className="absolute inset-0 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+                    </div>
+                  )}
+                  {imageError && (
+                    <div className="absolute inset-0 bg-red-50 border border-red-200 rounded-lg flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="text-red-500 text-2xl mb-1">⚠️</div>
+                        <div className="text-red-600 text-xs">Image failed to load</div>
+                      </div>
+                    </div>
+                  )}
+                  {!imageLoading && !imageError && (
+                    <img
+                      src={coverUrl}
+                      alt="Book cover preview"
+                      className="w-full h-full object-cover rounded-lg shadow-sm"
+                    />
+                  )}
+                </div>
+                {imageError && (
+                  <p className="text-red-600 text-sm text-center mt-2">
+                    The image URL appears to be invalid or inaccessible
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           <div>
