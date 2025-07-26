@@ -4,6 +4,7 @@ import { api } from '../../convex/_generated/api'
 import { Id } from '../../convex/_generated/dataModel'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { EditBookDrawer } from './EditBookDrawer'
 
 interface TBRSectionProps {
   books: any[]
@@ -15,6 +16,8 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
   const [showReveal, setShowReveal] = useState(false)
   const [selectedBook, setSelectedBook] = useState<any>(null)
   const [isRevealing, setIsRevealing] = useState(false)
+  const [showEditDrawer, setShowEditDrawer] = useState(false)
+  const [editingBook, setEditingBook] = useState<any>(null)
   const selectNextBook = useMutation(api.books.selectNextBook)
 
   const handleSelectNext = async () => {
@@ -40,6 +43,16 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
   const closeReveal = () => {
     setShowReveal(false)
     setSelectedBook(null)
+  }
+
+  const handleEditBook = (book: any) => {
+    setEditingBook(book)
+    setShowEditDrawer(true)
+  }
+
+  const closeEditDrawer = () => {
+    setShowEditDrawer(false)
+    setEditingBook(null)
   }
 
   return (
@@ -71,8 +84,18 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
             {books.map((book) => (
               <div
                 key={book._id}
-                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow relative"
               >
+                {/* Edit Button */}
+                <button
+                  onClick={() => handleEditBook(book)}
+                  className="absolute top-2 right-2 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors shadow-sm"
+                  title="Edit book"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
                 {book.coverUrl ? (
                   <img
                     src={book.coverUrl}
@@ -192,6 +215,15 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
             )}
           </div>
         </div>
+      )}
+
+      {/* Edit Book Drawer */}
+      {showEditDrawer && editingBook && (
+        <EditBookDrawer
+          book={editingBook}
+          isOpen={showEditDrawer}
+          onClose={closeEditDrawer}
+        />
       )}
     </>
   )
