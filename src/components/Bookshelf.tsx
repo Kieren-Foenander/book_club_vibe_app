@@ -7,6 +7,7 @@ import { TBRSection } from './TBRSection'
 import { PastReads } from './PastReads'
 import { VotingQueue } from './VotingQueue'
 import { SuggestBook } from './SuggestBook'
+import { SuggestedBooksOverview } from './SuggestedBooksOverview'
 
 interface BookshelfProps {
   clubId: Id<'clubs'>
@@ -14,7 +15,7 @@ interface BookshelfProps {
 
 export function Bookshelf({ clubId }: BookshelfProps) {
   const [activeTab, setActiveTab] = useState<
-    'bookshelf' | 'voting' | 'suggest'
+    'bookshelf' | 'voting' | 'suggest' | 'suggestions'
   >('bookshelf')
   const bookshelf = useQuery(api.books.getBookshelf, { clubId })
   const pendingBooks = useQuery(api.books.getPendingBooks, { clubId })
@@ -61,6 +62,8 @@ export function Bookshelf({ clubId }: BookshelfProps) {
 
       {activeTab === 'suggest' && <SuggestBook clubId={clubId} />}
 
+      {activeTab === 'suggestions' && <SuggestedBooksOverview clubId={clubId} />}
+
       {/* Bottom Tab Bar */}
       <nav className="fixed bottom-0 left-0 w-full z-20 bg-white border-t border-gray-200 shadow-lg flex justify-around items-center h-16 md:max-w-4xl md:left-1/2 md:-translate-x-1/2 md:rounded-t-xl md:mx-auto pb-6 pt-2">
         <button
@@ -89,6 +92,17 @@ export function Bookshelf({ clubId }: BookshelfProps) {
               {pendingCount}
             </span>
           )}
+        </button>
+        <button
+          onClick={() => setActiveTab('suggestions')}
+          className={`flex flex-col items-center justify-center flex-1 h-full transition-colors ${
+            activeTab === 'suggestions'
+              ? 'text-orange-600 font-bold'
+              : 'text-gray-500 hover:text-orange-600'
+          }`}
+        >
+          <span className="text-xl">📋</span>
+          <span className="text-xs">Overview</span>
         </button>
         <button
           onClick={() => setActiveTab('suggest')}

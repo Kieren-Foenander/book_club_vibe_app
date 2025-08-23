@@ -578,3 +578,147 @@ export const updatePushSubTime = internalMutation({
     return null;
   },
 });
+
+export const deleteBookFromTBR = mutation({
+  args: {
+    bookId: v.id("books"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Must be logged in");
+    }
+
+    const book = await ctx.db.get(args.bookId);
+    if (!book) {
+      throw new Error("Book not found");
+    }
+
+    // Verify user is a member of the club
+    const membership = await ctx.db
+      .query("clubMembers")
+      .withIndex("by_club_and_user", (q) => q.eq("clubId", book.clubId).eq("userId", userId))
+      .unique();
+
+    if (!membership) {
+      throw new Error("You are not a member of this club");
+    }
+
+    // Only allow deletion of approved books (TBR books)
+    if (book.status !== "approved") {
+      throw new Error("Can only delete books from the TBR section");
+    }
+
+    // Delete the book
+    await ctx.db.delete(args.bookId);
+
+    // Also delete all associated votes and ratings
+    const votes = await ctx.db
+      .query("votes")
+      .withIndex("by_book", (q) => q.eq("bookId", args.bookId))
+      .collect();
+
+    for (const vote of votes) {
+      await ctx.db.delete(vote._id);
+    }
+
+    const ratings = await ctx.db
+      .query("ratings")
+      .withIndex("by_book", (q) => q.eq("bookId", args.bookId))
+      .collect();
+
+    for (const rating of ratings) {
+      await ctx.db.delete(rating._id);
+    }
+
+    return true;
+  },
+});
+
+export const getAllSuggestedBooks = query({
+  args: {
+    clubId: v.id("clubs"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      return [];
+    }
+
+    // Verify membership
+    const membership = await ctx.db
+      .query("clubMembers")
+      .withIndex("by_club_and_user", (q) => q.eq("clubId", args.clubId).eq("userId", userId))
+      .unique();
+
+    if (!membership) {
+      return [];
+    }
+
+    // Get all books for this club (pending, approved, rejected)
+    const allBooks = await ctx.db
+      .query("books")
+      .withIndex("by_club", (q) => q.eq("clubId", args.clubId))
+      .collect();
+
+    // Get all votes for all books
+    const allVotes = await ctx.db
+      .query("votes")
+      .collect();
+    
+    // Filter votes to only include those for books in this club
+    const bookIds = new Set(allBooks.map(b => b._id));
+    const filteredVotes = allVotes.filter(vote => bookIds.has(vote.bookId));
+
+    // Group votes by book
+    const votesByBook = new Map();
+    for (const vote of filteredVotes) {
+      if (!votesByBook.has(vote.bookId)) {
+        votesByBook.set(vote.bookId, []);
+      }
+      votesByBook.get(vote.bookId)!.push(vote);
+    }
+
+    // Get all club members to calculate total possible votes
+    const allMembers = await ctx.db
+      .query("clubMembers")
+      .withIndex("by_club", (q) => q.eq("clubId", args.clubId))
+      .collect();
+
+    const totalMembers = allMembers.length;
+
+    // Process each book with vote details
+    const booksWithVotes = await Promise.all(
+      allBooks.map(async (book) => {
+        const suggester = await ctx.db.get(book.suggestedBy);
+        const bookVotes = votesByBook.get(book._id) || [];
+        
+        const approvalCount = bookVotes.filter((v: any) => v.vote === "approve").length;
+        const vetoCount = bookVotes.filter((v: any) => v.vote === "veto").length;
+        const totalVotes = bookVotes.length;
+        const pendingVotes = totalMembers - totalVotes;
+
+        // Get veto reasons for rejected books
+        const vetoReasons = bookVotes
+          .filter((v: any) => v.vote === "veto" && v.vetoReason)
+          .map((v: any) => v.vetoReason);
+
+        return {
+          ...book,
+          suggesterName: suggester?.name || "Unknown User",
+          approvalCount,
+          vetoCount,
+          totalVotes,
+          pendingVotes,
+          totalMembers,
+          vetoReasons,
+          votePercentage: totalMembers > 0 ? Math.round((totalVotes / totalMembers) * 100) : 0,
+          approvalPercentage: totalVotes > 0 ? Math.round((approvalCount / totalVotes) * 100) : 0,
+        };
+      })
+    );
+
+    // Sort by suggested date (newest first)
+    return booksWithVotes.sort((a, b) => b.suggestedAt - a.suggestedAt);
+  },
+});
