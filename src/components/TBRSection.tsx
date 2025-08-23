@@ -18,7 +18,9 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
   const [isRevealing, setIsRevealing] = useState(false)
   const [showEditDrawer, setShowEditDrawer] = useState(false)
   const [editingBook, setEditingBook] = useState<any>(null)
+  const [deletingBook, setDeletingBook] = useState<string | null>(null)
   const selectNextBook = useMutation(api.books.selectNextBook)
+  const deleteBookFromTBR = useMutation(api.books.deleteBookFromTBR)
 
   const handleSelectNext = async () => {
     if (!isAdmin) return
@@ -55,6 +57,21 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
     setEditingBook(null)
   }
 
+  const handleDeleteBook = async (bookId: string) => {
+    if (deletingBook) return // Prevent double-clicking
+    
+    setDeletingBook(bookId)
+    try {
+      await deleteBookFromTBR({ bookId: bookId as Id<'books'> })
+      toast.success('Book removed from TBR')
+    } catch (error) {
+      toast.error('Failed to delete book')
+      console.error(error)
+    } finally {
+      setDeletingBook(null)
+    }
+  }
+
   return (
     <>
       <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
@@ -86,16 +103,32 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
                 key={book._id}
                 className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow relative"
               >
-                {/* Edit Button */}
-                <button
-                  onClick={() => handleEditBook(book)}
-                  className="absolute top-2 right-2 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors shadow-sm"
-                  title="Edit book"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </button>
+                {/* Action Buttons */}
+                <div className="absolute top-2 right-2 flex gap-1">
+                  <button
+                    onClick={() => handleEditBook(book)}
+                    className="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors shadow-sm"
+                    title="Edit book"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleDeleteBook(book._id)}
+                    disabled={deletingBook === book._id}
+                    className="bg-red-600 text-white p-2 rounded-full hover:bg-red-700 transition-colors shadow-sm disabled:opacity-50"
+                    title="Delete book"
+                  >
+                    {deletingBook === book._id ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
                 {book.coverUrl ? (
                   <img
                     src={book.coverUrl}
