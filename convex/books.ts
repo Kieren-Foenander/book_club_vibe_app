@@ -761,3 +761,63 @@ export const manuallyApproveBook = mutation({
     return true;
   },
 });
+
+export const removeSuggestion = mutation({
+  args: {
+    bookId: v.id("books"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Must be logged in");
+    }
+
+    const book = await ctx.db.get(args.bookId);
+    if (!book) {
+      throw new Error("Book not found");
+    }
+
+    // Verify user is a member of the club
+    const membership = await ctx.db
+      .query("clubMembers")
+      .withIndex("by_club_and_user", (q) => q.eq("clubId", book.clubId).eq("userId", userId))
+      .unique();
+
+    if (!membership) {
+      throw new Error("You are not a member of this club");
+    }
+
+    // Check if user is admin or the original suggester
+    const club = await ctx.db.get(book.clubId);
+    if (!club) {
+      throw new Error("Club not found");
+    }
+
+    const isAdmin = club.adminId === userId;
+    const isOriginalSuggester = book.suggestedBy === userId;
+
+    if (!isAdmin && !isOriginalSuggester) {
+      throw new Error("You can only remove your own suggestions");
+    }
+
+    // Only allow removal of pending suggestions
+    if (book.status !== "pending") {
+      throw new Error("Can only remove pending suggestions");
+    }
+
+    // Delete the book
+    await ctx.db.delete(args.bookId);
+
+    // Also delete all associated votes
+    const votes = await ctx.db
+      .query("votes")
+      .withIndex("by_book", (q) => q.eq("bookId", args.bookId))
+      .collect();
+
+    for (const vote of votes) {
+      await ctx.db.delete(vote._id);
+    }
+
+    return true;
+  },
+});

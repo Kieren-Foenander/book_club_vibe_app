@@ -22,16 +22,20 @@ export function SuggestedBooksOverview({
     isOpen: boolean
     bookId: Id<'books'> | null
     bookTitle: string
+    action: 'approve' | 'remove'
   }>({
     isOpen: false,
     bookId: null,
     bookTitle: '',
+    action: 'approve',
   })
 
   const allSuggestedBooks = useQuery(api.books.getAllSuggestedBooks, { clubId })
+  const currentUser = useQuery(api.auth.loggedInUser)
   const manuallyApproveBook = useMutation(api.books.manuallyApproveBook)
+  const removeSuggestion = useMutation(api.books.removeSuggestion)
 
-  if (allSuggestedBooks === undefined) {
+  if (allSuggestedBooks === undefined || currentUser === undefined) {
     return (
       <div className="flex justify-center py-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
@@ -96,21 +100,62 @@ export function SuggestedBooksOverview({
       isOpen: true,
       bookId,
       bookTitle,
+      action: 'approve',
     })
   }
 
-  const handleConfirmApprove = async () => {
+  const handleRemoveSuggestion = (bookId: Id<'books'>, bookTitle: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      bookId,
+      bookTitle,
+      action: 'remove',
+    })
+  }
+
+  const handleConfirmAction = async () => {
     if (!confirmDialog.bookId) return
 
     try {
-      await manuallyApproveBook({ bookId: confirmDialog.bookId })
-      toast.success(
-        `"${confirmDialog.bookTitle}" has been approved for everyone!`
-      )
+      if (confirmDialog.action === 'approve') {
+        await manuallyApproveBook({ bookId: confirmDialog.bookId })
+        toast.success(
+          `"${confirmDialog.bookTitle}" has been approved for everyone!`
+        )
+      } else if (confirmDialog.action === 'remove') {
+        await removeSuggestion({ bookId: confirmDialog.bookId })
+        toast.success(
+          `"${confirmDialog.bookTitle}" has been removed from suggestions.`
+        )
+      }
     } catch (error) {
-      toast.error('Failed to approve book')
+      toast.error(
+        confirmDialog.action === 'approve'
+          ? 'Failed to approve book'
+          : 'Failed to remove suggestion'
+      )
       console.error(error)
     }
+  }
+
+  const getConfirmDialogTitle = () => {
+    return confirmDialog.action === 'approve'
+      ? 'Approve Book for Everyone'
+      : 'Remove Suggestion'
+  }
+
+  const getConfirmDialogMessage = () => {
+    if (confirmDialog.action === 'approve') {
+      return `Are you sure you want to approve "${confirmDialog.bookTitle}" for everyone? This will add it to the To-Be-Read section and bypass the normal voting process.`
+    } else {
+      return `Are you sure you want to remove "${confirmDialog.bookTitle}" from your suggestions? This action cannot be undone.`
+    }
+  }
+
+  const getConfirmDialogButtonText = () => {
+    return confirmDialog.action === 'approve'
+      ? 'Approve for Everyone'
+      : 'Remove Suggestion'
   }
 
   return (
@@ -261,19 +306,21 @@ export function SuggestedBooksOverview({
                           Veto Reasons:
                         </div>
                         <div className="flex flex-wrap gap-1">
-                          {book.vetoReasons.map((reason, index) => (
-                            <span
-                              key={index}
-                              className="inline-block bg-red-100 text-red-700 text-xs px-2 py-1 rounded"
-                            >
-                              {getVetoReasonText(reason)}
-                            </span>
-                          ))}
+                          {book.vetoReasons.map(
+                            (reason: string, index: number) => (
+                              <span
+                                key={index}
+                                className="inline-block bg-red-100 text-red-700 text-xs px-2 py-1 rounded"
+                              >
+                                {getVetoReasonText(reason)}
+                              </span>
+                            )
+                          )}
                         </div>
                       </div>
                     )}
 
-                  {/* Progress Bar for Pending Books */}
+                  {/* Progress Bar and Action Buttons for Pending Books */}
                   {book.status === 'pending' && (
                     <div className="mt-3">
                       <div className="flex justify-between text-xs text-gray-500 mb-1">
@@ -289,16 +336,32 @@ export function SuggestedBooksOverview({
                         ></div>
                       </div>
 
-                      {/* Approve for Everyone Button */}
-                      <div className="mt-4">
-                        <button
-                          onClick={() =>
-                            handleApproveForEveryone(book._id, book.title)
-                          }
-                          className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
-                        >
-                          ✅ Approve for Everyone
-                        </button>
+                      {/* Action Buttons */}
+                      <div className="mt-4 space-y-2">
+                        {/* Approve for Everyone Button (Admin only) */}
+                        {isAdmin && (
+                          <button
+                            onClick={() =>
+                              handleApproveForEveryone(book._id, book.title)
+                            }
+                            className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
+                          >
+                            ✅ Approve for Everyone
+                          </button>
+                        )}
+
+                        {/* Remove Suggestion Button (For the suggester or admin) */}
+                        {currentUser &&
+                          (book.suggestedBy === currentUser._id || isAdmin) && (
+                            <button
+                              onClick={() =>
+                                handleRemoveSuggestion(book._id, book.title)
+                              }
+                              className="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
+                            >
+                              🗑️ Remove Suggestion
+                            </button>
+                          )}
                       </div>
                     </div>
                   )}
@@ -313,12 +376,17 @@ export function SuggestedBooksOverview({
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         onClose={() =>
-          setConfirmDialog({ isOpen: false, bookId: null, bookTitle: '' })
+          setConfirmDialog({
+            isOpen: false,
+            bookId: null,
+            bookTitle: '',
+            action: 'approve',
+          })
         }
-        onConfirm={handleConfirmApprove}
-        title="Approve Book for Everyone"
-        message={`Are you sure you want to approve "${confirmDialog.bookTitle}" for everyone? This will add it to the To-Be-Read section and bypass the normal voting process.`}
-        confirmText="Approve for Everyone"
+        onConfirm={handleConfirmAction}
+        title={getConfirmDialogTitle()}
+        message={getConfirmDialogMessage()}
+        confirmText={getConfirmDialogButtonText()}
         cancelText="Cancel"
       />
     </div>
