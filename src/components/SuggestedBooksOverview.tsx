@@ -1,16 +1,35 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
-import { useQuery } from 'convex/react'
+import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import { Id } from '../../convex/_generated/dataModel'
 import { useState } from 'react'
+import { toast } from 'sonner'
+import { ConfirmDialog } from './ConfirmDialog'
 
 interface SuggestedBooksOverviewProps {
   clubId: Id<'clubs'>
+  isAdmin: boolean
 }
 
-export function SuggestedBooksOverview({ clubId }: SuggestedBooksOverviewProps) {
-  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
+export function SuggestedBooksOverview({
+  clubId,
+  isAdmin,
+}: SuggestedBooksOverviewProps) {
+  const [filterStatus, setFilterStatus] = useState<
+    'all' | 'pending' | 'approved' | 'rejected'
+  >('all')
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean
+    bookId: Id<'books'> | null
+    bookTitle: string
+  }>({
+    isOpen: false,
+    bookId: null,
+    bookTitle: '',
+  })
+
   const allSuggestedBooks = useQuery(api.books.getAllSuggestedBooks, { clubId })
+  const manuallyApproveBook = useMutation(api.books.manuallyApproveBook)
 
   if (allSuggestedBooks === undefined) {
     return (
@@ -20,62 +39,105 @@ export function SuggestedBooksOverview({ clubId }: SuggestedBooksOverviewProps) 
     )
   }
 
-  const filteredBooks = filterStatus === 'all' 
-    ? allSuggestedBooks 
-    : allSuggestedBooks.filter(book => book.status === filterStatus)
+  const filteredBooks =
+    filterStatus === 'all'
+      ? allSuggestedBooks
+      : allSuggestedBooks.filter((book) => book.status === filterStatus)
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800'
-      case 'approved': return 'bg-green-100 text-green-800'
-      case 'rejected': return 'bg-red-100 text-red-800'
-      case 'current': return 'bg-blue-100 text-blue-800'
-      case 'completed': return 'bg-purple-100 text-purple-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'approved':
+        return 'bg-green-100 text-green-800'
+      case 'rejected':
+        return 'bg-red-100 text-red-800'
+      case 'current':
+        return 'bg-blue-100 text-blue-800'
+      case 'completed':
+        return 'bg-purple-100 text-purple-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
     }
   }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending': return '⏳'
-      case 'approved': return '✅'
-      case 'rejected': return '❌'
-      case 'current': return '📖'
-      case 'completed': return '🎉'
-      default: return '📚'
+      case 'pending':
+        return '⏳'
+      case 'approved':
+        return '✅'
+      case 'rejected':
+        return '❌'
+      case 'current':
+        return '📖'
+      case 'completed':
+        return '🎉'
+      default:
+        return '📚'
     }
   }
 
   const getVetoReasonText = (reason: string) => {
     switch (reason) {
-      case 'already_read': return 'Already read'
-      case 'not_for_me': return 'Not for me (Spice/Theme)'
-      case 'not_interested': return 'Not interested'
-      default: return reason
+      case 'already_read':
+        return 'Already read'
+      case 'not_for_me':
+        return 'Not for me (Spice/Theme)'
+      case 'not_interested':
+        return 'Not interested'
+      default:
+        return reason
+    }
+  }
+
+  const handleApproveForEveryone = (bookId: Id<'books'>, bookTitle: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      bookId,
+      bookTitle,
+    })
+  }
+
+  const handleConfirmApprove = async () => {
+    if (!confirmDialog.bookId) return
+
+    try {
+      await manuallyApproveBook({ bookId: confirmDialog.bookId })
+      toast.success(
+        `"${confirmDialog.bookTitle}" has been approved for everyone!`
+      )
+    } catch (error) {
+      toast.error('Failed to approve book')
+      console.error(error)
     }
   }
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">📋 All Suggestions</h2>
-        <div className="flex gap-2">
-          {(['all', 'pending', 'approved', 'rejected'] as const).map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilterStatus(status)}
-              className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                filterStatus === status
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {status === 'all' && 'All'}
-              {status === 'pending' && '⏳ Pending'}
-              {status === 'approved' && '✅ Approved'}
-              {status === 'rejected' && '❌ Rejected'}
-            </button>
-          ))}
+    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 w-full">
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-gray-800 mb-4">
+          📋 All Suggestions
+        </h2>
+        <div className="flex flex-wrap gap-2">
+          {(['all', 'pending', 'approved', 'rejected'] as const).map(
+            (status) => (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
+                  filterStatus === status
+                    ? 'bg-green-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {status === 'all' && 'All'}
+                {status === 'pending' && '⏳ Pending'}
+                {status === 'approved' && '✅ Approved'}
+                {status === 'rejected' && '❌ Rejected'}
+              </button>
+            )
+          )}
         </div>
       </div>
 
@@ -83,10 +145,9 @@ export function SuggestedBooksOverview({ clubId }: SuggestedBooksOverviewProps) 
         <div className="text-center py-8">
           <div className="text-6xl mb-4">📚</div>
           <p className="text-gray-500">
-            {filterStatus === 'all' 
+            {filterStatus === 'all'
               ? 'No books have been suggested yet'
-              : `No ${filterStatus} books found`
-            }
+              : `No ${filterStatus} books found`}
           </p>
         </div>
       ) : (
@@ -94,11 +155,11 @@ export function SuggestedBooksOverview({ clubId }: SuggestedBooksOverviewProps) 
           {filteredBooks.map((book) => (
             <div
               key={book._id}
-              className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+              className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow w-full"
             >
-              <div className="flex items-start gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
                 {/* Book Cover */}
-                <div className="flex-shrink-0">
+                <div className="flex-shrink-0 self-start">
                   {book.coverUrl ? (
                     <img
                       src={book.coverUrl}
@@ -114,28 +175,32 @@ export function SuggestedBooksOverview({ clubId }: SuggestedBooksOverviewProps) 
 
                 {/* Book Details */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between mb-2">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-2 gap-2">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-800 truncate">
+                      <h3 className="font-semibold text-gray-800 break-words">
                         {book.title}
                       </h3>
                       <p className="text-gray-600 text-sm">by {book.author}</p>
                     </div>
-                    <div className="flex items-center gap-2 ml-2">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(book.status)}`}>
+                    <div className="flex items-center gap-2 self-start">
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(book.status)}`}
+                      >
                         {getStatusIcon(book.status)} {book.status}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-gray-600 mb-2">
                     <span>Suggested by {book.suggesterName}</span>
-                    <span>•</span>
-                    <span>{new Date(book.suggestedAt).toLocaleDateString()}</span>
+                    <span className="hidden sm:inline">•</span>
+                    <span>
+                      {new Date(book.suggestedAt).toLocaleDateString()}
+                    </span>
                     {book.genre && (
                       <>
-                        <span>•</span>
-                        <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">
+                        <span className="hidden sm:inline">•</span>
+                        <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs self-start">
                           {book.genre}
                         </span>
                       </>
@@ -149,7 +214,9 @@ export function SuggestedBooksOverview({ clubId }: SuggestedBooksOverviewProps) 
                       {Array.from({ length: 5 }, (_, i) => (
                         <span
                           key={i}
-                          className={i < book.spiceRating ? 'text-red-500' : 'grayscale'}
+                          className={
+                            i < book.spiceRating ? 'text-red-500' : 'grayscale'
+                          }
                         >
                           🌶️
                         </span>
@@ -158,54 +225,80 @@ export function SuggestedBooksOverview({ clubId }: SuggestedBooksOverviewProps) 
                   </div>
 
                   {/* Vote Statistics */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="grid grid-cols-2 gap-4 text-sm mb-3">
                     <div className="text-center">
-                      <div className="font-semibold text-green-600">{book.approvalCount}</div>
+                      <div className="font-semibold text-green-600">
+                        {book.approvalCount}
+                      </div>
                       <div className="text-gray-500">Approvals</div>
                     </div>
                     <div className="text-center">
-                      <div className="font-semibold text-red-600">{book.vetoCount}</div>
+                      <div className="font-semibold text-red-600">
+                        {book.vetoCount}
+                      </div>
                       <div className="text-gray-500">Vetoes</div>
                     </div>
                     <div className="text-center">
-                      <div className="font-semibold text-yellow-600">{book.pendingVotes}</div>
+                      <div className="font-semibold text-yellow-600">
+                        {book.pendingVotes}
+                      </div>
                       <div className="text-gray-500">Pending</div>
                     </div>
                     <div className="text-center">
-                      <div className="font-semibold text-blue-600">{book.votePercentage}%</div>
+                      <div className="font-semibold text-blue-600">
+                        {book.votePercentage}%
+                      </div>
                       <div className="text-gray-500">Voted</div>
                     </div>
                   </div>
 
                   {/* Veto Reasons for Rejected Books */}
-                  {book.status === 'rejected' && book.vetoReasons && book.vetoReasons.length > 0 && (
-                    <div className="mt-3 p-3 bg-red-50 rounded-lg">
-                      <div className="text-sm font-medium text-red-800 mb-1">Veto Reasons:</div>
-                      <div className="flex flex-wrap gap-1">
-                        {book.vetoReasons.map((reason, index) => (
-                          <span
-                            key={index}
-                            className="inline-block bg-red-100 text-red-700 text-xs px-2 py-1 rounded"
-                          >
-                            {getVetoReasonText(reason)}
-                          </span>
-                        ))}
+                  {book.status === 'rejected' &&
+                    book.vetoReasons &&
+                    book.vetoReasons.length > 0 && (
+                      <div className="mt-3 p-3 bg-red-50 rounded-lg">
+                        <div className="text-sm font-medium text-red-800 mb-1">
+                          Veto Reasons:
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {book.vetoReasons.map((reason, index) => (
+                            <span
+                              key={index}
+                              className="inline-block bg-red-100 text-red-700 text-xs px-2 py-1 rounded"
+                            >
+                              {getVetoReasonText(reason)}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
                   {/* Progress Bar for Pending Books */}
                   {book.status === 'pending' && (
                     <div className="mt-3">
                       <div className="flex justify-between text-xs text-gray-500 mb-1">
                         <span>Voting Progress</span>
-                        <span>{book.totalVotes}/{book.totalMembers} members</span>
+                        <span>
+                          {book.totalVotes}/{book.totalMembers} members
+                        </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
                           className="bg-yellow-500 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${book.votePercentage}%` }}
                         ></div>
+                      </div>
+
+                      {/* Approve for Everyone Button */}
+                      <div className="mt-4">
+                        <button
+                          onClick={() =>
+                            handleApproveForEveryone(book._id, book.title)
+                          }
+                          className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
+                        >
+                          ✅ Approve for Everyone
+                        </button>
                       </div>
                     </div>
                   )}
@@ -215,6 +308,19 @@ export function SuggestedBooksOverview({ clubId }: SuggestedBooksOverviewProps) 
           ))}
         </div>
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() =>
+          setConfirmDialog({ isOpen: false, bookId: null, bookTitle: '' })
+        }
+        onConfirm={handleConfirmApprove}
+        title="Approve Book for Everyone"
+        message={`Are you sure you want to approve "${confirmDialog.bookTitle}" for everyone? This will add it to the To-Be-Read section and bypass the normal voting process.`}
+        confirmText="Approve for Everyone"
+        cancelText="Cancel"
+      />
     </div>
   )
 }

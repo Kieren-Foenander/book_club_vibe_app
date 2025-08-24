@@ -1,9 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMutation } from 'convex/react'
 import { useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import { Id } from '../../convex/_generated/dataModel'
 import { toast } from 'sonner'
+import { ViewToggle } from './ViewToggle'
+import { BookshelfView } from './BookshelfView'
+import {
+  ViewMode,
+  getViewPreferences,
+  setViewPreference,
+} from '../lib/viewPreferences'
 
 interface PastReadsProps {
   books: any[]
@@ -20,8 +27,20 @@ export function PastReads({ books }: PastReadsProps) {
   const [showReviewsModal, setShowReviewsModal] = useState(false)
   const [reviewsBook, setReviewsBook] = useState<any>(null)
   const [selectedBookId, setSelectedBookId] = useState<Id<'books'> | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('cards')
 
   const rateBook = useMutation(api.books.rateBook)
+
+  // Load view preference on mount
+  useEffect(() => {
+    const preferences = getViewPreferences()
+    setViewMode(preferences.pastReads)
+  }, [])
+
+  const handleViewChange = (newView: ViewMode) => {
+    setViewMode(newView)
+    setViewPreference('pastReads', newView)
+  }
 
   // Fetch reviews for the selected book
   const reviews = useQuery(
@@ -49,6 +68,12 @@ export function PastReads({ books }: PastReadsProps) {
     setReviewsBook(book)
     setSelectedBookId(book._id as Id<'books'>)
     setShowReviewsModal(true)
+  }
+
+  const handleBookClick = (book: any) => {
+    if (viewMode === 'bookshelf') {
+      openReviewsModal(book)
+    }
   }
 
   const closeReviewsModal = () => {
@@ -119,7 +144,15 @@ export function PastReads({ books }: PastReadsProps) {
   return (
     <>
       <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">📖 Past Reads</h2>
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-4">
+            <h2 className="text-2xl font-bold text-gray-800">📖 Past Reads</h2>
+            <ViewToggle
+              currentView={viewMode}
+              onViewChange={handleViewChange}
+            />
+          </div>
+        </div>
 
         {books.length === 0 ? (
           <div className="text-center py-8">
@@ -129,6 +162,13 @@ export function PastReads({ books }: PastReadsProps) {
               Your reading history will appear here
             </p>
           </div>
+        ) : viewMode === 'bookshelf' ? (
+          <BookshelfView
+            books={books}
+            onBookClick={handleBookClick}
+            maxBooks={20}
+            showEmptySlots={false}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {books.map((book) => (

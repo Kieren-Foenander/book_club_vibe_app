@@ -114,7 +114,7 @@ export default function App() {
           </div>
         </header>
 
-        <main className="flex-1 p-4">
+        <main className="flex-1 p-2 sm:p-4 w-full overflow-x-hidden">
           <Authenticated>
             <NameChecker>
               {currentView === 'clubs' ? (
@@ -126,7 +126,7 @@ export default function App() {
           </Authenticated>
 
           <Unauthenticated>
-            <div className="max-w-md mx-auto mt-20">
+            <div className="max-w-md mx-auto mt-20 px-4">
               <div className="text-center mb-8">
                 <h1 className="text-4xl font-bold text-pink-600 mb-4">
                   📚✨ Book Club

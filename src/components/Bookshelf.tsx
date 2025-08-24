@@ -33,9 +33,9 @@ export function Bookshelf({ clubId }: BookshelfProps) {
     pendingBooks?.filter((book) => !book.userVote).length || 0
 
   return (
-    <div className="max-w-4xl mx-auto pb-20 relative min-h-[80vh]">
+    <div className="w-full max-w-4xl mx-auto pb-20 relative min-h-[80vh] px-2 sm:px-4">
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
           {clubDetails.name}
         </h1>
         <p className="text-gray-600">{clubDetails.members.length} members</p>
@@ -62,7 +62,9 @@ export function Bookshelf({ clubId }: BookshelfProps) {
 
       {activeTab === 'suggest' && <SuggestBook clubId={clubId} />}
 
-      {activeTab === 'suggestions' && <SuggestedBooksOverview clubId={clubId} />}
+      {activeTab === 'suggestions' && (
+        <SuggestedBooksOverview clubId={clubId} isAdmin={clubDetails.isAdmin} />
+      )}
 
       {/* Bottom Tab Bar */}
       <nav className="fixed bottom-0 left-0 w-full z-20 bg-white border-t border-gray-200 shadow-lg flex justify-around items-center h-16 md:max-w-4xl md:left-1/2 md:-translate-x-1/2 md:rounded-t-xl md:mx-auto pb-6 pt-2">
