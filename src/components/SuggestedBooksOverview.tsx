@@ -1,20 +1,35 @@
 /* eslint-disable @typescript-eslint/no-misused-promises */
-import { useQuery } from 'convex/react'
+import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import { Id } from '../../convex/_generated/dataModel'
 import { useState } from 'react'
+import { toast } from 'sonner'
+import { ConfirmDialog } from './ConfirmDialog'
 
 interface SuggestedBooksOverviewProps {
   clubId: Id<'clubs'>
+  isAdmin: boolean
 }
 
 export function SuggestedBooksOverview({
   clubId,
+  isAdmin,
 }: SuggestedBooksOverviewProps) {
   const [filterStatus, setFilterStatus] = useState<
     'all' | 'pending' | 'approved' | 'rejected'
   >('all')
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean
+    bookId: Id<'books'> | null
+    bookTitle: string
+  }>({
+    isOpen: false,
+    bookId: null,
+    bookTitle: '',
+  })
+
   const allSuggestedBooks = useQuery(api.books.getAllSuggestedBooks, { clubId })
+  const manuallyApproveBook = useMutation(api.books.manuallyApproveBook)
 
   if (allSuggestedBooks === undefined) {
     return (
@@ -73,6 +88,28 @@ export function SuggestedBooksOverview({
         return 'Not interested'
       default:
         return reason
+    }
+  }
+
+  const handleApproveForEveryone = (bookId: Id<'books'>, bookTitle: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      bookId,
+      bookTitle,
+    })
+  }
+
+  const handleConfirmApprove = async () => {
+    if (!confirmDialog.bookId) return
+
+    try {
+      await manuallyApproveBook({ bookId: confirmDialog.bookId })
+      toast.success(
+        `"${confirmDialog.bookTitle}" has been approved for everyone!`
+      )
+    } catch (error) {
+      toast.error('Failed to approve book')
+      console.error(error)
     }
   }
 
@@ -251,6 +288,18 @@ export function SuggestedBooksOverview({
                           style={{ width: `${book.votePercentage}%` }}
                         ></div>
                       </div>
+
+                      {/* Approve for Everyone Button */}
+                      <div className="mt-4">
+                        <button
+                          onClick={() =>
+                            handleApproveForEveryone(book._id, book.title)
+                          }
+                          className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm"
+                        >
+                          ✅ Approve for Everyone
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -259,6 +308,19 @@ export function SuggestedBooksOverview({
           ))}
         </div>
       )}
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() =>
+          setConfirmDialog({ isOpen: false, bookId: null, bookTitle: '' })
+        }
+        onConfirm={handleConfirmApprove}
+        title="Approve Book for Everyone"
+        message={`Are you sure you want to approve "${confirmDialog.bookTitle}" for everyone? This will add it to the To-Be-Read section and bypass the normal voting process.`}
+        confirmText="Approve for Everyone"
+        cancelText="Cancel"
+      />
     </div>
   )
 }

@@ -665,7 +665,7 @@ export const getAllSuggestedBooks = query({
     const allVotes = await ctx.db
       .query("votes")
       .collect();
-    
+
     // Filter votes to only include those for books in this club
     const bookIds = new Set(allBooks.map(b => b._id));
     const filteredVotes = allVotes.filter(vote => bookIds.has(vote.bookId));
@@ -692,7 +692,7 @@ export const getAllSuggestedBooks = query({
       allBooks.map(async (book) => {
         const suggester = await ctx.db.get(book.suggestedBy);
         const bookVotes = votesByBook.get(book._id) || [];
-        
+
         const approvalCount = bookVotes.filter((v: any) => v.vote === "approve").length;
         const vetoCount = bookVotes.filter((v: any) => v.vote === "veto").length;
         const totalVotes = bookVotes.length;
@@ -720,5 +720,44 @@ export const getAllSuggestedBooks = query({
 
     // Sort by suggested date (newest first)
     return booksWithVotes.sort((a, b) => b.suggestedAt - a.suggestedAt);
+  },
+});
+
+export const manuallyApproveBook = mutation({
+  args: {
+    bookId: v.id("books"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Must be logged in");
+    }
+
+    const book = await ctx.db.get(args.bookId);
+    if (!book) {
+      throw new Error("Book not found");
+    }
+
+    // Verify membership
+    const membership = await ctx.db
+      .query("clubMembers")
+      .withIndex("by_club_and_user", (q) => q.eq("clubId", book.clubId).eq("userId", userId))
+      .unique();
+
+    if (!membership) {
+      throw new Error("You are not a member of this club");
+    }
+
+    // Check if book is in pending status
+    if (book.status !== "pending") {
+      throw new Error("Can only manually approve pending books");
+    }
+
+    // Update book status to approved
+    await ctx.db.patch(args.bookId, {
+      status: "approved",
+    });
+
+    return true;
   },
 });

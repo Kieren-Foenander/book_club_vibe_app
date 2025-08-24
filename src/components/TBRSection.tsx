@@ -5,6 +5,7 @@ import { Id } from '../../convex/_generated/dataModel'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { EditBookDrawer } from './EditBookDrawer'
+import { motion } from 'framer-motion'
 
 interface TBRSectionProps {
   books: any[]
@@ -59,7 +60,7 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
 
   const handleDeleteBook = async (bookId: string) => {
     if (deletingBook) return // Prevent double-clicking
-    
+
     setDeletingBook(bookId)
     try {
       await deleteBookFromTBR({ bookId: bookId as Id<'books'> })
@@ -110,8 +111,18 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
                     className="bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors shadow-sm"
                     title="Edit book"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
                     </svg>
                   </button>
                   <button
@@ -123,8 +134,18 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
                     {deletingBook === book._id ? (
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        />
                       </svg>
                     )}
                   </button>
@@ -184,7 +205,23 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
                 </p>
               </div>
             ) : (
-              <div className="bg-white rounded-lg p-8 max-w-md mx-auto animate-bounce">
+              <motion.div
+                className="bg-white rounded-lg p-8 max-w-md mx-auto"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{
+                  scale: [0.8, 1.1, 1],
+                  opacity: 1,
+                  y: [0, -20, 0, -10, 0, -5, 0],
+                }}
+                transition={{
+                  scale: { duration: 0.5 },
+                  opacity: { duration: 0.3 },
+                  y: {
+                    duration: 2,
+                    times: [0, 0.2, 0.4, 0.6, 0.8, 0.9, 1],
+                  },
+                }}
+              >
                 <div className="text-6xl mb-4">🎉</div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-4">
                   Your Next Book Is...
@@ -244,7 +281,7 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
                 >
                   Let's Read! 📖
                 </button>
-              </div>
+              </motion.div>
             )}
           </div>
         </div>

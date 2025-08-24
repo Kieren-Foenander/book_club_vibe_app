@@ -63,7 +63,7 @@ export function Bookshelf({ clubId }: BookshelfProps) {
       {activeTab === 'suggest' && <SuggestBook clubId={clubId} />}
 
       {activeTab === 'suggestions' && (
-        <SuggestedBooksOverview clubId={clubId} />
+        <SuggestedBooksOverview clubId={clubId} isAdmin={clubDetails.isAdmin} />
       )}
 
       {/* Bottom Tab Bar */}
