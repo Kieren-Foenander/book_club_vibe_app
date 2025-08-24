@@ -2,10 +2,18 @@
 import { useMutation } from 'convex/react'
 import { api } from '../../convex/_generated/api'
 import { Id } from '../../convex/_generated/dataModel'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { EditBookDrawer } from './EditBookDrawer'
 import { motion } from 'framer-motion'
+import { ViewToggle } from './ViewToggle'
+import { BookshelfView } from './BookshelfView'
+import { BookDetailModal } from './BookDetailModal'
+import {
+  ViewMode,
+  getViewPreferences,
+  setViewPreference,
+} from '../lib/viewPreferences'
 
 interface TBRSectionProps {
   books: any[]
@@ -20,8 +28,22 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
   const [showEditDrawer, setShowEditDrawer] = useState(false)
   const [editingBook, setEditingBook] = useState<any>(null)
   const [deletingBook, setDeletingBook] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('cards')
+  const [showBookModal, setShowBookModal] = useState(false)
+  const [modalBook, setModalBook] = useState<any>(null)
   const selectNextBook = useMutation(api.books.selectNextBook)
   const deleteBookFromTBR = useMutation(api.books.deleteBookFromTBR)
+
+  // Load view preference on mount
+  useEffect(() => {
+    const preferences = getViewPreferences()
+    setViewMode(preferences.tbr)
+  }, [])
+
+  const handleViewChange = (newView: ViewMode) => {
+    setViewMode(newView)
+    setViewPreference('tbr', newView)
+  }
 
   const handleSelectNext = async () => {
     if (!isAdmin) return
@@ -65,6 +87,8 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
     try {
       await deleteBookFromTBR({ bookId: bookId as Id<'books'> })
       toast.success('Book removed from TBR')
+      setShowBookModal(false)
+      setModalBook(null)
     } catch (error) {
       toast.error('Failed to delete book')
       console.error(error)
@@ -73,20 +97,30 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
     }
   }
 
+  const handleBookClick = (book: any) => {
+    if (viewMode === 'bookshelf') {
+      setModalBook(book)
+      setShowBookModal(true)
+    }
+  }
+
   return (
     <>
       <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">📚 To Be Read</h2>
-          {isAdmin && books.length > 0 && (
-            <button
-              onClick={handleSelectNext}
-              disabled={isRevealing}
-              className="bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50"
-            >
-              {isRevealing ? 'Selecting...' : '🎭 Dramatic Reveal'}
-            </button>
-          )}
+        <div className="flex flex-col gap-4 justify-between items-center mb-6">
+          <div className="flex items-center gap-4">
+            <h2 className="text-2xl font-bold text-gray-800">📚 To Be Read</h2>
+            {isAdmin && books.length > 0 && (
+              <button
+                onClick={handleSelectNext}
+                disabled={isRevealing}
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50"
+              >
+                {isRevealing ? 'Selecting...' : '🎭 Dramatic Reveal'}
+              </button>
+            )}
+          </div>
+          <ViewToggle currentView={viewMode} onViewChange={handleViewChange} />
         </div>
 
         {books.length === 0 ? (
@@ -97,6 +131,13 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
               Books need 100% approval from all members to appear here
             </p>
           </div>
+        ) : viewMode === 'bookshelf' ? (
+          <BookshelfView
+            books={books}
+            onBookClick={handleBookClick}
+            maxBooks={20}
+            showEmptySlots={true}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {books.map((book) => (
@@ -295,6 +336,20 @@ export function TBRSection({ books, clubId, isAdmin }: TBRSectionProps) {
           onClose={closeEditDrawer}
         />
       )}
+
+      {/* Book Detail Modal */}
+      <BookDetailModal
+        book={modalBook}
+        isOpen={showBookModal}
+        onClose={() => {
+          setShowBookModal(false)
+          setModalBook(null)
+        }}
+        onEdit={handleEditBook}
+        onDelete={handleDeleteBook}
+        showActions={true}
+        isDeleting={deletingBook === modalBook?._id}
+      />
     </>
   )
 }
